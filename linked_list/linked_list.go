@@ -16,7 +16,7 @@ type Wrapper struct {
 
 type Node struct {
 	Prev 	*Node
-	Curr 	Entity
+	El 		Entity
 	Next 	*Node
 }
 
@@ -25,7 +25,7 @@ func NewNode(el Entity, prev, next *Node) *Node {
 	this := &Node{
 		Prev: prev,
 		Next: next,
-		Curr: el,
+		El: el,
 	}
 	if prev != nil {
 		prev.Next = this
@@ -72,6 +72,7 @@ func (llw *Wrapper) Append(el Entity) {
 		pLast.Next = new
 		new.Prev = pLast
 		llw.Last = new
+		new.Next = nil
 	}
 	llw.Count += 1
 }
@@ -98,7 +99,7 @@ func (llw *Wrapper) Pop() Entity {
 	pLast := llw.Last
 	llw.Last = pLast.Prev
 	llw.Count -= 1
-	return pLast.Curr
+	return pLast.El
 }
 
 func (llw *Wrapper) InsertAt(el Entity, idx int64) (*Node, error) {
@@ -121,8 +122,86 @@ func (llw *Wrapper) InsertAt(el Entity, idx int64) (*Node, error) {
 }
 
 
-type Entity interface {
-	Print()
+func (llw *Wrapper) swap(a, b *Node) {
+	pa := a.Prev
+	if pa != nil {
+		pa.Next = b
+	}
+
+	nb := b.Next
+	if nb != nil {
+		nb.Prev = a	
+	}
+
+	if a == llw.First {
+		llw.First = b
+	}
+
+	if b == llw.Last {
+		llw.Last = b
+	}
+
+	a.Next = b.Next
+	b.Next = a
+	b.Prev = a.Prev
+	a.Prev = b
+
 }
 
 
+func (llw *Wrapper) BubbleSort() {
+	// [*, 3, *] [*, 1, *] [*, 2, *]
+	var runs uint8
+
+	for {
+		curr := llw.First
+		next := curr.Next
+		swapped := false
+		for {
+			if next == nil {
+				curr = llw.First
+				break
+			}
+
+			if curr.El.Weight() < next.El.Weight() {
+				fmt.Printf("Indeed, %.2f > %.2f, let's swap\n", curr.El.Weight(), next.El.Weight())
+				llw.swap(curr, next)
+				swapped = true
+			}
+
+			if curr.Next == nil {
+				curr = llw.First
+				break
+			}
+
+			curr = curr.Next
+			next = curr.Next			
+		}
+
+		if !swapped {
+			fmt.Printf("\nHaven't swapped this run (%d). Done BubbleSort!!!\n", runs)
+			return
+		}
+		runs += 1
+		fmt.Printf("Done pass #%d in BubbleSort", runs)
+	}
+}
+
+func (llw *Wrapper) Present() {
+	curr := llw.First
+	next := curr.Next
+
+	for { 
+		curr = next 
+		fmt.Printf("W: %.2f - ", curr.El.Weight())
+		next = curr.Next
+		if next == nil {
+			return
+		}
+	}
+}
+
+type Entity interface {
+	Print()
+	Weight() float64
+}
